@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notion-Style Database Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=1">
+</head>
+
+<body>
+    <div id="mobile-overlay" class="mobile-overlay"></div>
+    <div class="layout-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Databases</h2>
+            </div>
+
+            <div id="global-calendar-nav" class="collection-item"
+                style="margin-bottom: 1rem; border: 1px dashed var(--accent-color);">
+                📅 Global Calendar
+            </div>
+
+            <ul class="collection-list" id="collection-list">
+                <!-- Collections injected here -->
+            </ul>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header>
+                <div class="header-content" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button id="mobile-menu-btn" class="icon-btn" style="display: none; font-size: 1.5rem; margin-right: 0.5rem;">☰</button>
+                    <h1 id="active-collection-title">Select a Database</h1>
+                    <button id="rename-collection-btn" class="icon-btn" title="Rename Database"
+                        style="display: none; font-size: 1.2rem;">✏️</button>
+                </div>
+                <div id="collection-actions" style="display: none;">
+                    <div class="search-container">
+                        <input type="text" id="row-search-input" placeholder="Search records...">
+                    </div>
+                    <button class="secondary-btn" id="view-toggle-btn">📅 Calendar View</button>
+                    <button class="secondary-btn" id="add-formula-btn"><span class="icon">ƒx</span> Add Formula</button>
+                    <button class="secondary-btn" id="add-property-btn"><span class="icon">+</span> Add
+                        Property</button>
+                    <button id="add-item-btn" class="primary-btn">
+                        <span class="icon">+</span> New Item
+                    </button>
+                    <button id="delete-collection-btn" class="icon-btn delete-btn" title="Delete Database">🗑️</button>
+                </div>
+            </header>
+
+            <div class="content-wrapper" id="content-wrapper">
+                <div class="empty-state" id="no-collection-state">
+                    <p>Create or select a database from the sidebar to start tracking.</p>
+                </div>
+
+                <div id="active-collection-view" style="display: none;">
+
+                    <!-- Summary Bar for Database Formulas -->
+                    <div id="summary-bar" class="summary-bar" style="display: none;">
+                        <!-- Dynamically injected summary formula chips will go here -->
+                    </div>
+
+                    <!-- Table View -->
+                    <div id="table-view-container" class="table-container">
+                        <table class="dynamic-table" id="dynamic-table">
+                            <thead id="table-head">
+                                <!-- Dynamic headers injected here -->
+                            </thead>
+                            <tbody id="table-body">
+                                <!-- Dynamic rows injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Calendar View -->
+                    <div id="calendar-view-container" style="display: none;">
+                        <div class="calendar-controls">
+                            <button class="secondary-btn" id="prev-month-btn">&larr; Prev</button>
+                            <h3 id="calendar-month-label">Month Year</h3>
+                            <div style="display:flex; gap:0.5rem; align-items:center;">
+                                <select id="calendar-mode-select" class="field-type-select" style="width:auto;">
+                                    <option value="month">Month</option>
+                                    <option value="week">Week</option>
+                                    <option value="day">Day</option>
+                                </select>
+                                <button class="secondary-btn" id="next-month-btn">Next &rarr;</button>
+                            </div>
+                        </div>
+                        <div class="calendar-grid">
+                            <div class="calendar-day-header">Sun</div>
+                            <div class="calendar-day-header">Mon</div>
+                            <div class="calendar-day-header">Tue</div>
+                            <div class="calendar-day-header">Wed</div>
+                            <div class="calendar-day-header">Thu</div>
+                            <div class="calendar-day-header">Fri</div>
+                            <div class="calendar-day-header">Sat</div>
+                            <!-- Days will be dynamically generated via JS -->
+                            <div id="calendar-days" style="display: contents;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Global Calendar View -->
+                <div id="global-calendar-view" style="display: none;">
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div class="calendar-controls">
+                                <button class="secondary-btn" id="gc-prev-month-btn">&larr; Prev</button>
+                                <h3 id="gc-month-label">Month Year</h3>
+                                <div style="display:flex; gap:0.5rem; align-items:center;">
+                                    <select id="gc-mode-select" class="field-type-select" style="width:auto;">
+                                        <option value="month">Month</option>
+                                        <option value="week">Week</option>
+                                        <option value="day">Day</option>
+                                    </select>
+                                    <button class="secondary-btn" id="gc-next-month-btn">Next &rarr;</button>
+                                </div>
+                            </div>
+                            <div class="calendar-grid">
+                                <div class="calendar-day-header">Sun</div>
+                                <div class="calendar-day-header">Mon</div>
+                                <div class="calendar-day-header">Tue</div>
+                                <div class="calendar-day-header">Wed</div>
+                                <div class="calendar-day-header">Thu</div>
+                                <div class="calendar-day-header">Fri</div>
+                                <div class="calendar-day-header">Sat</div>
+                                <!-- Days will be dynamically generated via JS -->
+                                <div id="global-calendar-days" style="display: contents;"></div>
+                            </div>
+                        </div>
+                        <div id="calendar-filter" class="form-group"
+                            style="min-width: 200px; background: var(--bg-secondary); padding: 1rem; border-radius: 8px;">
+                            <h4 style="margin-bottom: 0.5rem;">Filter by Database</h4>
+                            <!-- Checkboxes injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Creating a New Database/Collection -->
+    <div id="collection-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Database</h2>
+                <button class="close-btn close-collection-modal">&times;</button>
+            </div>
+            <form id="collection-form">
+                <div class="form-group">
+                    <label for="collection-name">Database Name *</label>
+                    <input type="text" id="collection-name" required placeholder="e.g., Book Tracker">
+                </div>
+
+                <div class="form-group">
+                    <label for="collection-template">Template / Copy From (Optional)</label>
+                    <select id="collection-template" class="target-collection-select">
+                        <option value="">None (Start Blank)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Columns (Fields)</label>
+                    <div id="fields-container">
+                        <!-- Default Title field (required for all tables usually for UI) -->
+                        <div class="field-row">
+                            <input type="text" class="field-name-input" value="Title" required>
+                            <select class="field-type-select">
+                                <option value="Text">Text</option>
+                                <option value="Number">Number</option>
+                                <option value="DateTime">Date / Time</option>
+                                <option value="Relation">Relation</option>
+                                <option value="NestedDatabase">Nested Database</option>
+                                <option value="Formula">Formula</option>
+                            </select>
+                            <select class="target-collection-select" style="display:none;" disabled></select>
+                            <input type="text" class="formula-expression-input" placeholder="e.g. len(rows)"
+                                style="display:none;" disabled>
+                            <button type="button" class="icon-btn" disabled>🔒</button>
+                        </div>
+                    </div>
+                    <button type="button" id="add-field-btn" class="secondary-btn small-btn mt-2">+ Add
+                        Property</button>
+                </div>
+
+                <div class="form-group" style="padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <label>Database Summary Formulas</label>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        Compute metrics across the entire table. Use <code>rows</code> to access the dataset (e.g.
+                        <code>sum(r['Price'] for r in rows)</code>).
+                    </p>
+                    <div id="summary-formulas-container">
+                        <!-- Summary rows injected here -->
+                    </div>
+                    <button type="button" id="add-summary-btn" class="secondary-btn small-btn mt-2">+ Add Summary
+                        Metric</button>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="secondary-btn close-collection-modal">Cancel</button>
+                    <button type="submit" class="primary-btn">Create Database</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Adding/Editing Items in the Active Database -->
+    <div id="item-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="item-modal-title">Record</h2>
+                <button class="close-btn close-item-modal">&times;</button>
+            </div>
+
+            <div id="duplicate-entry-container" class="form-group"
+                style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                <label for="duplicate-select">Quick Fill: Duplicate Existing Entry</label>
+                <select id="duplicate-select">
+                    <option value="">-- Select an entry to duplicate --</option>
+                </select>
+            </div>
+
+            <!-- Form fields will be dynamically injected based on the schema -->
+            <form id="dynamic-item-form">
+                <input type="hidden" id="dynamic-item-id">
+                <div id="dynamic-form-fields" style="margin-bottom: 2rem;"></div>
+
+                <div class="modal-actions" style="margin-top: 1.5rem;">
+                    <button type="button" class="secondary-btn close-item-modal">Cancel</button>
+                    <button type="submit" class="primary-btn">Save Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Formula Editor IDE Modal -->
+    <div id="formula-ide-modal" class="modal hidden">
+        <div class="modal-content"
+            style="max-width: 800px; display: flex; flex-direction: column; gap: 1rem; background: #1e1e1e; border: 1px solid #333;">
+            <div class="modal-header" style="border-bottom: 1px solid #333; padding-bottom: 1rem; margin-bottom: 0;">
+                <h2 id="formula-ide-title" style="color: #fff; font-family: monospace;">&lt;/&gt; Formula Editor</h2>
+                <button class="close-btn close-formula-modal" style="color: #aaa;">&times;</button>
+            </div>
+
+            <div style="display: flex; gap: 1rem; flex-grow: 1; height: 350px;">
+                <div style="width: 250px; background: #252526; padding: 1rem; border-right: 1px solid #333; overflow-y: auto; font-family: monospace; font-size: 0.85rem;"
+                    id="formula-ide-sidebar">
+                    <h4 style="color: #aaa; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.75rem;">
+                        Variables & Methods</h4>
+                    <ul id="formula-ide-vars"
+                        style="list-style: none; padding: 0; margin: 0; color: #569cd6; line-height: 1.6;">
+                        <!-- injected -->
+                    </ul>
+                </div>
+
+                <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 0.5rem; position: relative;">
+                    <input type="text" id="formula-ide-name" placeholder="Formula Metric Name"
+                        style="background: #2d2d2d; color: #fff; border: 1px solid #444; font-family: monospace; padding: 0.5rem;"
+                        required>
+                    <div style="flex-grow: 1; position: relative; background: #1e1e1e; border: 1px solid #444;">
+                        <pre id="formula-ide-highlight" aria-hidden="true"
+                            style="margin: 0; padding: 1rem; font-family: monospace; font-size: 0.95rem; line-height: 1.4; color: #d4d4d4; white-space: pre-wrap; word-wrap: break-word; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow-y: hidden; box-sizing: border-box;"></pre>
+                        <textarea id="formula-ide-expression"
+                            placeholder="Enter Python expression...&#10;e.g. sum(r['Price'] for r in rows)"
+                            style="width: 100%; height: 100%; background: transparent; color: transparent; caret-color: white; border: none; padding: 1rem; font-family: monospace; font-size: 0.95rem; line-height: 1.4; resize: none; outline: none; box-sizing: border-box;"
+                            spellcheck="false" required></textarea>
+                    </div>
+
+                    <label
+                        style="color: #ccc; font-family: monospace; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                        <input type="checkbox" id="formula-ide-is-summary">
+                        Is Database Summary Metric (spanning all rows)
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-actions" style="border-top: 1px solid #333; padding-top: 1rem; margin-top: 0;">
+                <button type="button" class="secondary-btn close-formula-modal"
+                    style="background: transparent; color: #aaa;">Cancel</button>
+                <button type="button" id="formula-ide-save-btn" class="primary-btn"
+                    style="background: #0e639c; color: #fff;">Save Formula</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Field / Property Configuration Modal (For Add & Edit standard columns) -->
+    <div id="field-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px; background: var(--surface-color);">
+            <div class="modal-header">
+                <h2 id="field-modal-title">Configure Property</h2>
+                <button class="close-btn close-field-modal">&times;</button>
+            </div>
+            <form id="field-form" style="display: flex; flex-direction: column; gap: 1rem;">
+                <input type="text" id="field-modal-name" placeholder="Property Header Name" required>
+                <select id="field-modal-type" class="field-type-select">
+                    <option value="Text">Text</option>
+                    <option value="Number">Number</option>
+                    <option value="DateTime">Date & Time</option>
+                    <option value="Relation">Relation</option>
+                    <option value="NestedDatabase">Nested Database</option>
+                    <option value="Formula">Formula</option>
+                </select>
+                <select id="field-modal-target" class="target-collection-select hidden">
+                    <option value="">Select Target DB...</option>
+                </select>
+                <button type="button" id="field-modal-formula-btn" class="secondary-btn small-btn hidden">&lt;/&gt; Edit
+                    Formula</button>
+                <input type="hidden" id="field-modal-expression">
+                <div class="modal-actions">
+                    <button type="button" class="secondary-btn close-field-modal">Cancel</button>
+                    <button type="submit" class="primary-btn">Save Property</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container"></div>
+
+    <script src="{{ url_for('static', filename='script.js') }}?v=2"></script>
+</body>
+
+</html>
